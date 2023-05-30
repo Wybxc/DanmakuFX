@@ -1,6 +1,7 @@
 package cc.wybxc.backend;
 
 import cc.wybxc.common.DanmakuMessage;
+import lombok.NonNull;
 
 import java.util.Timer;
 import java.util.concurrent.BlockingQueue;
@@ -14,20 +15,20 @@ public class DummyBackend implements DanmakuBackend {
     private final Timer timer = new Timer();
 
     @Override
-    public void start(BlockingQueue<DanmakuMessage> danmakuQueue) {
+    public void start(@NonNull BlockingQueue<DanmakuMessage> danmakuQueue) {
         timer.scheduleAtFixedRate(new java.util.TimerTask() {
             @Override
             public void run() {
                 var now = System.currentTimeMillis();
                 var message = new DanmakuMessage(
-                        "Danmaku " + now,
-                        20,
+                        "测试弹幕 " + now,
+                        40,
                         "#FFFFFF",
                         144
                 );
                 var result = danmakuQueue.offer(message);
             }
-        }, 0, 1000);
+        }, 0, 100);
     }
 
     @Override

@@ -23,13 +23,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class DanmakuApplication extends Application {
-    private final @NonNull Pane pane;
+    private final @NonNull DanmakuDisplay danmakuDisplay;
     private final @NonNull Stage stage;
 
     public static BlockingQueue<DanmakuMessage> danmakuQueue = new LinkedBlockingQueue<>();
 
     public DanmakuApplication() {
-        this.pane = new Pane();
+        var bounds = Screen.getPrimary().getVisualBounds();
+        this.danmakuDisplay = new DanmakuDisplay(bounds.getWidth(), bounds.getHeight());
         this.stage = new Stage();
     }
 
@@ -49,7 +50,7 @@ public class DanmakuApplication extends Application {
         stage.setAlwaysOnTop(true);
         stage.setMaximized(true);
 
-        var scene = new Scene(pane);
+        var scene = new Scene(danmakuDisplay);
         scene.setFill(null);
         stage.setScene(scene);
 
@@ -84,23 +85,6 @@ public class DanmakuApplication extends Application {
     }
 
     public void emitDanmaku(@NonNull DanmakuMessage danmaku) {
-        var text = new Text(danmaku.text());
-        text.setFont(Font.font(danmaku.size()));
-        text.setFill(danmaku.webColor());
-
-        // 滚动弹幕
-        var bounds = text.getLayoutBounds();
-        text.setX(stage.getWidth());
-        text.setY(bounds.getHeight());
-
-        pane.getChildren().add(text);
-
-        var timeline = new Timeline();
-        timeline.getKeyFrames().add(new KeyFrame(
-                Duration.seconds(stage.getWidth() / danmaku.speed()),
-                new KeyValue(text.xProperty(), -bounds.getWidth()))
-        );
-        timeline.onFinishedProperty().set(event -> pane.getChildren().remove(text));
-        timeline.play();
+        danmakuDisplay.emitDanmaku(danmaku);
     }
 }
