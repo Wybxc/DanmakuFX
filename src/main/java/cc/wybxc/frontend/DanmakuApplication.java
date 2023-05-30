@@ -1,20 +1,13 @@
 package cc.wybxc.frontend;
 
 import cc.wybxc.common.DanmakuMessage;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
+import com.dustinredmond.fxtrayicon.FXTrayIcon;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.event.Event;
 import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.util.Duration;
 import lombok.NonNull;
 
 import java.util.Timer;
@@ -43,6 +36,12 @@ public class DanmakuApplication extends Application {
         primaryStage.setHeight(0);
         primaryStage.show();
 
+        var trayIcon = new FXTrayIcon.Builder(primaryStage).menuItem("Exit", event -> {
+            Platform.exit();
+            System.exit(0);
+        }).build();
+        trayIcon.show();
+
         // 全屏置顶显示
         stage.setTitle("DanmakuFX");
         stage.initOwner(primaryStage);
@@ -60,8 +59,12 @@ public class DanmakuApplication extends Application {
         stage.setWidth(bounds.getWidth());
         stage.setHeight(bounds.getHeight());
 
-        // 阻止窗口被关闭
-        stage.setOnCloseRequest(Event::consume);
+
+        stage.setOnCloseRequest((event) -> {
+            trayIcon.hide();
+            Platform.exit();
+            System.exit(0);
+        });
 
         // 定时轮询弹幕
         new Timer().scheduleAtFixedRate(new java.util.TimerTask() {
