@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <title>Danmaku Client</title>
+</head>
+<body>
+
+<script type="module">
+    import {
+        html, render, useState, useEffect, useCallback
+    } from 'https://esm.sh/htm/preact/standalone'
+
+    function App(props) {
+        const [port, setPort] = useState(2333);
+        const [host, setHost] = useState("localhost");
+
+        return html`
+            <div>
+                <div>
+                    <label for="host">地址：</label>
+                    <input id="host" type="text" value=${host} onInput=${e => setHost(e.target.value)}/>
+                </div>
+                <div>
+                    <label for="port">端口：</label>
+                    <input id="port" type="text" value=${port} onInput=${e => setPort(e.target.value)}/>
+                </div>
+                <${DanmakuClient} host=${host} port=${port}/>
+            </div>
+        `;
+    }
+
+    function DanmakuClient({host, port}) {
+        const [socket, setSocket] = useState(null);
+        const [message, setMessage] = useState("");
+        const [logs, setLogs] = useState([]);
+
+        useEffect(() => {
+            if (socket) {
+                socket.close();
+            }
+
+            const newSocket = new WebSocket(`ws://${host}:${port}`);
+            newSocket.onopen = () => {
+                setLogs([...logs, `连接成功, ws://${host}:${port}`]);
+            };
+            newSocket.onmessage = (e) => {
+                setLogs([...logs, `收到消息: ${e.data}`]);
+            };
+            newSocket.onclose = () => {
+                setLogs([...logs, "连接关闭"]);
+            };
+            setSocket(newSocket);
+        }, [host, port]);
+
+        const send = useCallback(() => {
+            const danmakuMessage = JSON.stringify({
+                text: message,
+            });
+            socket.send(danmakuMessage);
+            setLogs([...logs, `发送弹幕: ${danmakuMessage}`]);
+        }, [message, socket]);
+
+        return html`
+            <div>
+                <label for="message">弹幕：</label>
+                <input id="message" type="text" value=${message} onInput=${e => setMessage(e.target.value)}/>
+                <button onClick=${send} disabled=${!socket} type="button">发送</button>
+                <textarea style="
+                    width: 100%;
+                    height: 300px;
+                    overflow: scroll;
+                " readonly title="日志">
+                    ${logs.join("\n")}
+                </textarea>
+            </div>
+        `;
+    }
+
+    render(html`
+        <${App}/>`, document.body);
+</script>
+
+
+</body>
+</html>
