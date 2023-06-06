@@ -32,7 +32,7 @@ public class Main {
 
         if (cmd.hasOption("h")) {
             var formatter = new HelpFormatter();
-            formatter.printHelp("wybxc", options);
+            formatter.printHelp("DanmakuFX", options);
             System.exit(0);
         }
 
