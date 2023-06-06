@@ -1,8 +1,8 @@
 package cc.wybxc.backend;
 
+import cc.wybxc.common.ApplicationProperties;
 import cc.wybxc.common.DanmakuMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.NonNull;
 
 import java.net.InetSocketAddress;
@@ -14,50 +14,36 @@ import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WebSocketBackend implements DanmakuBackend {
+public class WebSocketBackend extends DanmakuBackend {
 
-    private final int port;
-    private WebSocketServer server = null;
+    private final WebSocketServer server;
 
     private final static Logger logger = LoggerFactory.getLogger(WebSocketBackend.class);
 
-    public WebSocketBackend(int port) {
-        this.port = port;
+    public WebSocketBackend(@NonNull BlockingQueue<DanmakuMessage> danmakuQueue) {
+        super(danmakuQueue);
+        int port = ApplicationProperties.getBackendPort();
+        this.server = new Server(new InetSocketAddress(port), danmakuQueue);
     }
 
     @Override
-    public void start(@NonNull BlockingQueue<DanmakuMessage> danmakuQueue) {
-        server = new Server(new InetSocketAddress(port), danmakuQueue);
+    public void run() {
         server.run();
     }
 
     @Override
     public void stop() {
-        if (server != null) {
-            try {
-                server.stop();
-            } catch (InterruptedException e) {
-                logger.error("Failed to stop WebSocket server", e);
-            }
+        try {
+            server.stop();
+        } catch (InterruptedException e) {
+            logger.error("Failed to stop WebSocket server", e);
         }
     }
 
-    static class WebSocketDanmakuMessage {
-        public String text;
-        public double size = 40;
-        public String color = "#FFFFFF";
-        public double speed = 144;
-
-        public DanmakuMessage toDanmakuMessage() {
-            return new DanmakuMessage(text, size, color, speed);
-        }
-    }
 
     static class Server extends WebSocketServer {
 
         private final BlockingQueue<DanmakuMessage> danmakuQueue;
-
-        private final static ObjectMapper mapper = new ObjectMapper();
 
 
         public Server(InetSocketAddress address, @NonNull BlockingQueue<DanmakuMessage> danmakuQueue) {
@@ -80,7 +66,7 @@ public class WebSocketBackend implements DanmakuBackend {
         @Override
         public void onMessage(WebSocket webSocket, String s) {
             try {
-                var message = mapper.readValue(s, WebSocketDanmakuMessage.class).toDanmakuMessage();
+                var message = DanmakuMessage.fromJson(s);
                 var result = danmakuQueue.offer(message);
             } catch (JsonProcessingException e) {
                 logger.error("Failed to parse WebSocket message", e);

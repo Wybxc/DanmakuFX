@@ -10,22 +10,21 @@ import java.util.concurrent.BlockingQueue;
  * 测试用弹幕后端。
  * <p>
  * 每秒向 {@link DanmakuMessage} 队列中放入一条弹幕消息。
- * */
-public class DummyBackend implements DanmakuBackend {
+ */
+public class DummyBackend extends DanmakuBackend {
     private final Timer timer = new Timer();
 
+    public DummyBackend(@NonNull BlockingQueue<DanmakuMessage> danmakuQueue) {
+        super(danmakuQueue);
+    }
+
     @Override
-    public void start(@NonNull BlockingQueue<DanmakuMessage> danmakuQueue) {
+    public void run() {
         timer.scheduleAtFixedRate(new java.util.TimerTask() {
             @Override
             public void run() {
                 var now = System.currentTimeMillis();
-                var message = new DanmakuMessage(
-                        "测试弹幕 " + now,
-                        40,
-                        "#FFFFFF",
-                        144
-                );
+                var message = new DanmakuMessage("测试弹幕 " + now, 40, "#FFFFFF", 144);
                 var result = danmakuQueue.offer(message);
             }
         }, 0, 100);
@@ -35,4 +34,5 @@ public class DummyBackend implements DanmakuBackend {
     public void stop() {
         timer.cancel();
     }
+
 }

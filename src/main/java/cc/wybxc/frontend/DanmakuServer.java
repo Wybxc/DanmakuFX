@@ -1,5 +1,6 @@
 package cc.wybxc.frontend;
 
+import cc.wybxc.backend.DanmakuBackend;
 import cc.wybxc.common.DanmakuMessage;
 import com.dustinredmond.fxtrayicon.FXTrayIcon;
 import javafx.application.Application;
@@ -15,16 +16,21 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class DanmakuApplication extends Application {
+public class DanmakuServer extends Application {
     private final @NonNull DanmakuDisplay danmakuDisplay;
     private final @NonNull Stage stage;
 
     public static BlockingQueue<DanmakuMessage> danmakuQueue = new LinkedBlockingQueue<>();
 
-    public DanmakuApplication() {
+    public DanmakuServer() {
         var bounds = Screen.getPrimary().getVisualBounds();
         this.danmakuDisplay = new DanmakuDisplay(bounds.getWidth(), bounds.getHeight());
         this.stage = new Stage();
+    }
+
+    public static void launch() {
+        DanmakuBackend.startBackend(danmakuQueue);
+        Application.launch(DanmakuServer.class);
     }
 
     @Override
@@ -35,12 +41,6 @@ public class DanmakuApplication extends Application {
         primaryStage.setWidth(0);
         primaryStage.setHeight(0);
         primaryStage.show();
-
-        var trayIcon = new FXTrayIcon.Builder(primaryStage).menuItem("Exit", event -> {
-            Platform.exit();
-            System.exit(0);
-        }).build();
-        trayIcon.show();
 
         // 全屏置顶显示
         stage.setTitle("DanmakuFX");
@@ -59,6 +59,11 @@ public class DanmakuApplication extends Application {
         stage.setWidth(bounds.getWidth());
         stage.setHeight(bounds.getHeight());
 
+        var trayIcon = new FXTrayIcon.Builder(primaryStage).menuItem("Exit", event -> {
+            Platform.exit();
+            System.exit(0);
+        }).build();
+        trayIcon.show();
 
         stage.setOnCloseRequest((event) -> {
             trayIcon.hide();
